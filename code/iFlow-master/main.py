@@ -64,12 +64,14 @@ if __name__ == '__main__':
     parser.add_argument('-fl', '--flow_length', type=int, default=10)
     parser.add_argument('-lr_df', '--lr_drop_factor', type=float, default=0.5)
     parser.add_argument('-lr_pn', '--lr_patience', type=int, default=10)
+    parser.add_argument('-nph', '--nat_param_method', type=str, default='orig', 
+                        help='Changes the way natural params are created. Can choose from orig, fixed or removed')
 
     args = parser.parse_args()
+    print(args)
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 
-    print(args)
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
@@ -87,7 +89,7 @@ if __name__ == '__main__':
     # load data
     if not args.preload:
         dset = SyntheticDataset(args.file, 'cpu') # originally 'cpu' ????
-        loader_params = {'num_workers': 1, 'pin_memory': True} if args.cuda else {} ###############
+        loader_params = {'num_workers': 6, 'pin_memory': True} if args.cuda else {} ###############
         train_loader = DataLoader(dset, shuffle=True, batch_size=args.batch_size, **loader_params)
         data_dim, latent_dim, aux_dim = dset.get_dims()
         args.N = len(dset)
@@ -104,10 +106,10 @@ if __name__ == '__main__':
     if args.latent_dim is not None:
         latent_dim = args.latent_dim
         metadata.update({"train_latent_dim": latent_dim})
-
     # define model and optimizer
     model = None
     if args.i_what == 'iVAE':
+        print(latent_dim, data_dim, aux_dim, args.depth, args.hidden_dim)
         model = iVAE(latent_dim, \
                  data_dim, \
                  aux_dim, \

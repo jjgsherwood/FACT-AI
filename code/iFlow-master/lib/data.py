@@ -357,9 +357,11 @@ def save_data(path, *args, **kwargs):
 class SyntheticDataset(Dataset):
     def __init__(self, path, device='cpu'):
         self.device = device
+        print(path)
         self.path = path
 
         data = np.load(path)
+        print(data)
         self.data = data
         self.s = torch.from_numpy(data['s']).to(self.device)
         self.x = torch.from_numpy(data['x']).to(self.device)
@@ -451,7 +453,7 @@ def create_if_not_exist_dataset(root='data/',
                                 p='gauss', 
                                 a='xtanh',
                                 uncentered=False, 
-                                noisy=False, 
+                                noisy=True, 
                                 arg_str=None):
     """
     Create a dataset if it doesn't exist.
