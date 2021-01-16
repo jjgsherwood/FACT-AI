@@ -2,7 +2,7 @@
 # Set -i to iVAE for iVAE and iFlow for iFlow
 
 # for seed in $(seq 1 100)  (use this for all seeds)
-for seed in $(seq 3 5)
+for seed in $(seq 6 20)
 do
     python3 main.py \
         -x 1000_40_5_5_3_$seed'_'gauss_xtanh_u_f \
