@@ -12,7 +12,7 @@ from lib.metrics import mean_corr_coef as mcc
 from lib.models import iVAE
 from lib.planar_flow import *
 from lib.iFlow import *
-from lib.utils import Logger, checkpoint
+from lib.utils import Logger, checkpoint, save_results
 
 
 import os
@@ -292,7 +292,6 @@ if __name__ == '__main__':
         if args.i_what == 'iVAE':
             _, z_est_b = model.elbo(x_b, u_b)
         elif args.i_what == 'iFlow':
-            #(_, _, _), z_est = model.neg_log_likelihood(x, u)
             z_est_b, nat_params_b = model.inference(x_b, u_b)
 
         z_est_list.append(z_est_b.cpu().detach().numpy())
@@ -305,7 +304,8 @@ if __name__ == '__main__':
     #np.save("{}/nat_params.npy".format(Z_EST_FOLDER), nat_params)
     #print("z_est.shape ==", z_est.shape)
     
-    perf = mcc(s, z_est)
+    perf = mcc(s, z_est)    
     print("EVAL PERFORMANCE: {}".format(perf))
+    save_results("results.json", args, perf)
     print("DONE.")
 

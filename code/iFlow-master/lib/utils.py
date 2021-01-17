@@ -9,6 +9,20 @@ import torch
 
 import pdb
 
+def save_results(fname, args, perf):
+    try:
+        with open(fname) as f:
+            results = json.load(f)
+    except FileNotFoundError:
+        results = {}
+    key = f"{args.i_what}_{args.nat_param_method}" if args.i_what == "iFlow" else f"{args.i_what}"
+    print(key)
+    if not key in results.keys():
+        results[key] = [None for _ in range(100)]
+    results[key][args.seed - 1] = np.round(perf, 4)
+    with open(fname, 'w') as f:
+        json.dump(results, f)
+    
 
 def make_dir(dir_name):
     if dir_name[-1] != '/':
