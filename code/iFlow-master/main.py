@@ -69,6 +69,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     print(args)
+    seed = args.data_args.split("_")[5]
+    print(f"\nProcessing seed {seed}\n")
     
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
@@ -110,7 +112,6 @@ if __name__ == '__main__':
     # define model and optimizer
     model = None
     if args.i_what == 'iVAE':
-        print(latent_dim, data_dim, aux_dim, args.depth, args.hidden_dim)
         model = iVAE(latent_dim, \
                  data_dim, \
                  aux_dim, \
@@ -306,6 +307,6 @@ if __name__ == '__main__':
     
     perf = mcc(s, z_est)    
     print("EVAL PERFORMANCE: {}".format(perf))
-    save_results("results.json", args, perf)
+    save_results("results.json", args, perf, seed)
     print("DONE.")
 

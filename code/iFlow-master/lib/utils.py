@@ -9,7 +9,7 @@ import torch
 
 import pdb
 
-def save_results(fname, args, perf):
+def save_results(fname, args, perf, seed):
     try:
         with open(fname) as f:
             results = json.load(f)
@@ -19,7 +19,7 @@ def save_results(fname, args, perf):
     print(key)
     if not key in results.keys():
         results[key] = [None for _ in range(100)]
-    results[key][args.seed - 1] = np.round(perf, 4)
+    results[key][seed - 1] = np.round(perf, 4)
     with open(fname, 'w') as f:
         json.dump(results, f)
     
