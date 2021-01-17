@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     print(args)
-    seed = args.data_args.split("_")[5]
+    seed = int(args.data_args.split("_")[5])
     print(f"\nProcessing seed {seed}\n")
     
 
