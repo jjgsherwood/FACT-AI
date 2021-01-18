@@ -1,6 +1,5 @@
 import json
 import os
-import fcntl
 import errno
 import time
 
@@ -8,6 +7,12 @@ import numpy as np
 import torch
 
 import pdb
+
+if os.name == "posix":
+    import fcntl
+else:
+    fcntl = None
+
 
 def save_results(fname, args, perf, seed):
     try:
@@ -22,7 +27,7 @@ def save_results(fname, args, perf, seed):
     results[key][seed - 1] = np.round(perf, 4)
     with open(fname, 'w') as f:
         json.dump(results, f)
-    
+
 
 def make_dir(dir_name):
     if dir_name[-1] != '/':
@@ -59,6 +64,8 @@ def get_exp_id(log_folder):
                 else:
                     print('sleeping')
                     time.sleep(0.1)
+            except AttributeError:
+                break
         else:
             raise TimeoutError('Timeout on accessing log helper file {}'.format(helper_id_file))
         prev_id = int(file.readline())
@@ -66,7 +73,10 @@ def get_exp_id(log_folder):
 
         file.seek(0)
         file.writelines(str(curr_id))
-        fcntl.flock(file, fcntl.LOCK_UN)
+        try:
+            fcntl.flock(file, fcntl.LOCK_UN)
+        except AttributeError:
+            pass
     return curr_id
 
 
@@ -154,16 +164,16 @@ class Averager:
 
 class Logger:
     """A logging helper that tracks training loss and metrics."""
-    
-    def __init__(self, logdir='log/', **metadata):
+
+    def __init__(self, logdir='log//', **metadata):
         self.logdir = make_dir(logdir)
         exp_id = get_exp_id(logdir)
-        
+
         self.reset()
-        
+
         self.metadata = metadata
         self.exp_id = exp_id
-        
+
         self.log_dict = {}
         self.running_means = {}
 
@@ -210,7 +220,7 @@ class Logger:
             path = make_file(self.logdir + 'log.json')
         with open(path, 'a') as file:
             log = {'id': self.exp_id}
-            
+
             for k in self.keys():
                 if method == 'last':
                     log.update({k: self.get_last(k)})
@@ -218,11 +228,11 @@ class Logger:
                     log.update({k: self.log_dict[k]})
                 else:
                     raise ValueError('Incorrect method {}'.format(method))
-           
+
             if 'device' in self.metadata:
                 self.metadata.pop('device')
             log.update({'metadata': self.metadata})
-            
+
             json.dump(log, file)
             file.write('\n')
         print('Log saved to {}'.format(path))
