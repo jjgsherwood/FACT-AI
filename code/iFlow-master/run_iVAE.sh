@@ -2,11 +2,11 @@
 # Set -i to iVAE for iVAE and iFlow for iFlow
 
 # for seed in $(seq 1 100)  (use this for all seeds)
-for seed in $(seq 36 40)
+for seed in $(seq 61 80)
 do
     python3 main.py \
         -x 1000_40_5_5_3_$seed'_'gauss_xtanh_u_f \
-        -i iFlow \
+        -i iVAE \
         -ft RQNSF_AG \
         -npa Softplus \
         -fl 10 \
@@ -18,7 +18,7 @@ do
         -s 1 \
         -u 0 \
         -c \
-        -nph orig
+        -nph fixed
 done
     
 #python main.py \

@@ -12,7 +12,7 @@ from lib.metrics import mean_corr_coef as mcc
 from lib.models import iVAE
 from lib.planar_flow import *
 from lib.iFlow import *
-from lib.utils import Logger, checkpoint
+from lib.utils import Logger, checkpoint, save_results
 
 
 import os
@@ -64,12 +64,17 @@ if __name__ == '__main__':
     parser.add_argument('-fl', '--flow_length', type=int, default=10)
     parser.add_argument('-lr_df', '--lr_drop_factor', type=float, default=0.5)
     parser.add_argument('-lr_pn', '--lr_patience', type=int, default=10)
+    parser.add_argument('-nph', '--nat_param_method', type=str, default='orig', 
+                        help='Changes the way natural params are created. Can choose from orig, fixed or removed')
 
     args = parser.parse_args()
+    print(args)
+    seed = int(args.data_args.split("_")[5])
+    print(f"\nProcessing seed {seed}\n")
+    
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 
-    print(args)
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
@@ -87,7 +92,7 @@ if __name__ == '__main__':
     # load data
     if not args.preload:
         dset = SyntheticDataset(args.file, 'cpu') # originally 'cpu' ????
-        loader_params = {'num_workers': 1, 'pin_memory': True} if args.cuda else {} ###############
+        loader_params = {'num_workers': 6, 'pin_memory': True} if args.cuda else {} ###############
         train_loader = DataLoader(dset, shuffle=True, batch_size=args.batch_size, **loader_params)
         data_dim, latent_dim, aux_dim = dset.get_dims()
         args.N = len(dset)
@@ -104,7 +109,6 @@ if __name__ == '__main__':
     if args.latent_dim is not None:
         latent_dim = args.latent_dim
         metadata.update({"train_latent_dim": latent_dim})
-
     # define model and optimizer
     model = None
     if args.i_what == 'iVAE':
@@ -261,41 +265,48 @@ if __name__ == '__main__':
 
     ###### Run Test Here
     model.eval()
-    if args.i_what == 'iFlow':
-        import operator
-        from functools import reduce
-        total_num_examples = reduce(operator.mul, map(int, args.data_args.split('_')[:2]))
-        model.set_mask(total_num_examples)
         
     assert args.file is not None
     A = np.load(args.file)
-
-    x = A['x'] # of shape
-    x = torch.from_numpy(x).to(device)
-    print("x.shape ==", x.shape)
     
+    x = A['x'] # of shape
+    print("x.shape ==", x.shape)
     s = A['s'] # of shape
     #s = torch.from_numpy(s).to(device)
     print("s.shape ==", s.shape)
-
     u = A['u'] # of shape
-    u = torch.from_numpy(u).to(device)
     print("u.shape ==", u.shape)
 
-    if args.i_what == 'iVAE':
-        _, z_est = model.elbo(x, u)
-    elif args.i_what == 'iFlow':
-        #(_, _, _), z_est = model.neg_log_likelihood(x, u)
-        z_est, nat_params = model.inference(x, u)
+    # Perform evaluation batch-wise reduce VRAM-usage.
+    nr_batches = int(np.ceil(x.shape[0]//args.batch_size))
 
-    z_est = z_est.cpu().detach().numpy()
+    x_list = np.array_split(x, nr_batches)
+    u_list = np.array_split(u, nr_batches)
+
+    z_est_list = []
+
+    for i, (x_b, u_b) in enumerate(zip(x_list, u_list)):
+        x_b = torch.from_numpy(x_b).to(device)
+        u_b = torch.from_numpy(u_b).to(device)
+
+
+        if args.i_what == 'iVAE':
+            _, z_est_b = model.elbo(x_b, u_b)
+        elif args.i_what == 'iFlow':
+            z_est_b, nat_params_b = model.inference(x_b, u_b)
+
+        z_est_list.append(z_est_b.cpu().detach().numpy())
+    z_est = np.concatenate(z_est_list)
+
+    
     #nat_params = nat_params.cpu().detach().numpy()
     #os.makedirs(Z_EST_FOLDER)
     #np.save("{}/z_est.npy".format(Z_EST_FOLDER), z_est)
     #np.save("{}/nat_params.npy".format(Z_EST_FOLDER), nat_params)
     #print("z_est.shape ==", z_est.shape)
     
-    perf = mcc(s, z_est)
+    perf = mcc(s, z_est)    
     print("EVAL PERFORMANCE: {}".format(perf))
+    save_results("results.json", args, perf, seed)
     print("DONE.")
 
