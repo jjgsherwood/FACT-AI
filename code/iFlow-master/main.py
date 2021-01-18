@@ -66,6 +66,7 @@ if __name__ == '__main__':
     parser.add_argument('-lr_pn', '--lr_patience', type=int, default=10)
     parser.add_argument('-nph', '--nat_param_method', type=str, default='orig', 
                         help='Changes the way natural params are created. Can choose from orig, fixed or removed')
+    parser.add_argument('-sr', '--save_results', action='store_true', default=False, help='save results in json')
 
     args = parser.parse_args()
     print(args)
@@ -307,6 +308,7 @@ if __name__ == '__main__':
     
     perf = mcc(s, z_est)    
     print("EVAL PERFORMANCE: {}".format(perf))
-    save_results("results.json", args, perf, seed)
+    if args.save_results:
+        save_results("results.json", args, perf, seed)
     print("DONE.")
 
