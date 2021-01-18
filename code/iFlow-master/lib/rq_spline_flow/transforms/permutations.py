@@ -32,7 +32,7 @@ class Permutation(transforms.Transform):
                              .format(dim, len(permutation)))
         batch_size = inputs.shape[0]
         outputs = torch.index_select(inputs, dim, permutation)
-        logabsdet = torch.zeros(batch_size).cuda()
+        logabsdet = torch.zeros(batch_size).to(inputs.device)
         return outputs, logabsdet
 
     def forward(self, inputs, context=None):

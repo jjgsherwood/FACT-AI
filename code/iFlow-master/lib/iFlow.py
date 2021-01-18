@@ -14,13 +14,13 @@ import pdb
 import lib
 from lib.rq_spline_flow import utils as utils_rqsf
 from lib.rq_spline_flow import transforms
-from lib.rq_spline_flow import nn_ 
+from lib.rq_spline_flow import nn_
 
 def create_base_transform(i, base_transform_type, dim, num_bins):
     if base_transform_type == 'affine':
         return transforms.AffineCouplingTransform(
             mask=utils_rqsf.create_alternating_binary_mask(
-                        features=dim, 
+                        features=dim,
                         even=(i % 2 == 0)),
                         transform_net_create_fn=lambda in_features, out_features: nn_.ResidualNet(
                                                                            in_features=in_features,
@@ -29,11 +29,11 @@ def create_base_transform(i, base_transform_type, dim, num_bins):
                                                                            num_blocks=2,
                                                                            use_batch_norm=True)
         )
-    
+
     elif base_transform_type == "rqsf_c":
         return transforms.PiecewiseRationalQuadraticCouplingTransform(
             mask=utils_rqsf.create_alternating_binary_mask(
-                        features=dim, 
+                        features=dim,
                         even=(i % 2 == 0)),
                         transform_net_create_fn=lambda in_features, out_features: nn_.ResidualNet(
                                                                            in_features=in_features,
@@ -103,7 +103,7 @@ from lib.rq_spline_flow.rq_spline_flow import *
 class iFlow(nn.Module):
     def __init__(self, args):
         super(iFlow, self).__init__()
-        
+
         self.args = args
         self.bs = args['batch_size']
         assert args['latent_dim'] == args['data_dim']
@@ -113,16 +113,16 @@ class iFlow(nn.Module):
         self.k = 2 # number of orders of sufficient statistics
 
         flow_type = args['flow_type']
-        
+
         if flow_type == "PlanarFlow":
             self.nf = PlanarFlow(dim=self.x_dim, flow_length=args['flow_length'])
-        
+
         elif flow_type == "RQNSF_C":
             transform = transforms.CompositeTransform([
                 create_base_transform(i, "rqsf_c", self.z_dim, 64) for i in range(args['flow_length'])
             ])
             self.nf = SplineFlow(transform)
-        
+
         elif flow_type == "RQNSF_AG":
             transform = create_transform(self.z_dim, args['flow_length'], args['num_bins'])
             self.nf = SplineFlow(transform)
@@ -136,7 +136,7 @@ class iFlow(nn.Module):
                    "ReLU": nn.ReLU(inplace=True),
                    "Softmax": nn.Softmax(),
                    "Softplus": nn.Softplus()}
-       
+
         self.max_act_val = None
         act_str = args['nat_param_act']
         if act_str in str2act:
@@ -182,8 +182,8 @@ class iFlow(nn.Module):
         #    nn.ReLU(inplace=True),
         #    nn.Linear(4, 2*self.z_dim),
         #    nat_param_act,
-        #) ## for visualisation where self.u_dim == 5 
-       
+        #) ## for visualisation where self.u_dim == 5
+
         self.set_mask(self.bs)
 
     def set_mask(self, bs=64):
@@ -214,7 +214,7 @@ class iFlow(nn.Module):
                 xi = self.nat_param_act(nat_params[:,:,0].unsqueeze(2))
                 nat_params = torch.cat((xi, nat_params[:,:,1].unsqueeze(2)),2)
         elif self.nat_param_method == "removed":
-            nat_params = torch.ones((B, self.z_dim, 2)).cuda()
+            nat_params = torch.ones((B, self.z_dim, 2)).to(self.args['device'])
         if self.max_act_val:
             nat_params = nat_params * self.max_act_val #+ 1e-5 #self.mask1
         nat_params = nat_params * self.mask2
@@ -239,12 +239,12 @@ class FreeEnergyBound(nn.Module):
     def forward(self, T, nat_params, log_jacobians):
         B = T.size(0)
         sum_of_log_jacobians = torch.sum(log_jacobians)
-        
+
         sum_traces = 0.0
         for i in range(B):
             sum_traces += (torch.trace(nat_params[i].mm(T[i]))) # no .t(), since it is nxk-by-kxn matrix multiplication
         avg_traces = sum_traces / B
-       
+
         log_normalizer = -.5 * torch.sum(torch.log(torch.abs(nat_params[:, :, 0]))) / B
         nat_params_sqr = torch.pow(nat_params[:, :, 1], 2) # of shape [B, n]
         log_normalizer -= (torch.sum(nat_params_sqr / (4*nat_params[:, :, 0])) / B)
@@ -255,4 +255,3 @@ class FreeEnergyBound(nn.Module):
         neg_log_det = torch.sum(sum_of_log_jacobians.mul(-1)) / B
 
         return log_normalizer, neg_trace, neg_log_det
-        

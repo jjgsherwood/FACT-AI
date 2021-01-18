@@ -64,7 +64,7 @@ if __name__ == '__main__':
     parser.add_argument('-fl', '--flow_length', type=int, default=10)
     parser.add_argument('-lr_df', '--lr_drop_factor', type=float, default=0.5)
     parser.add_argument('-lr_pn', '--lr_patience', type=int, default=10)
-    parser.add_argument('-nph', '--nat_param_method', type=str, default='orig', 
+    parser.add_argument('-nph', '--nat_param_method', type=str, default='orig',
                         help='Changes the way natural params are created. Can choose from orig, fixed or removed')
     parser.add_argument('-sr', '--save_results', action='store_true', default=False, help='save results in json')
 
@@ -72,7 +72,7 @@ if __name__ == '__main__':
     print(args)
     seed = int(args.data_args.split("_")[5])
     print(f"\nProcessing seed {seed}\n")
-    
+
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 
@@ -83,7 +83,7 @@ if __name__ == '__main__':
 
     if args.file is None:
         args.file = create_if_not_exist_dataset(root='data/{}/'.format(args.seed), arg_str=args.data_args)
-    
+
     metadata = vars(args).copy()
     del metadata['no_log'], metadata['data_args']
 
@@ -103,7 +103,7 @@ if __name__ == '__main__':
         data_dim, latent_dim, aux_dim = train_loader.get_dims()
         args.N = train_loader.dataset_len
         metadata.update(train_loader.get_metadata())
-    
+
     if args.max_iter is None:
         args.max_iter = len(train_loader) * args.epochs
 
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     tensorboard_run_name = TENSORBOARD_RUN_FOLDER + 'exp' + str(exp_id) + '_'.join(
         map(str, ['', args.batch_size, args.max_iter, args.lr, args.hidden_dim, args.depth, args.anneal]))
     # 'runs/exp1_64_12500_0.001_50_3_False'
-    
+
     writer = SummaryWriter(logdir=tensorboard_run_name)
 
     if args.i_what == 'iFlow':
@@ -162,6 +162,7 @@ if __name__ == '__main__':
     while epoch < args.epochs: #args.max_iter:  #12500
         est = time.time()
         for itr, (x, u, z) in enumerate(train_loader):
+
             acc_itr = itr + epoch * len(train_loader)
 
             # x is of shape [64, 4]
@@ -183,7 +184,7 @@ if __name__ == '__main__':
             elif args.i_what == 'iFlow':
                 (log_normalizer, neg_trace, neg_log_det), z_est = model.neg_log_likelihood(x, u)
                 loss = log_normalizer + neg_trace + neg_log_det
-            
+
             loss.backward()
             optimizer.step()
 
@@ -217,7 +218,7 @@ if __name__ == '__main__':
                            optimizer, \
                            logger.get_last('loss'), \
                            logger.get_last('perf'))
-            
+
             """
             if args.i_what == 'iVAE':
                 print('----epoch {} iter {}:\tloss: {:.4f};\tperf: {:.4f}'.format(\
@@ -235,7 +236,7 @@ if __name__ == '__main__':
                                                                     neg_log_det.item(), \
                                                                     perf))
             """
-        
+
         epoch += 1
         eet = time.time()
         if args.i_what == 'iVAE':
@@ -266,10 +267,10 @@ if __name__ == '__main__':
 
     ###### Run Test Here
     model.eval()
-        
+
     assert args.file is not None
     A = np.load(args.file)
-    
+
     x = A['x'] # of shape
     print("x.shape ==", x.shape)
     s = A['s'] # of shape
@@ -299,16 +300,15 @@ if __name__ == '__main__':
         z_est_list.append(z_est_b.cpu().detach().numpy())
     z_est = np.concatenate(z_est_list)
 
-    
+
     #nat_params = nat_params.cpu().detach().numpy()
     #os.makedirs(Z_EST_FOLDER)
     #np.save("{}/z_est.npy".format(Z_EST_FOLDER), z_est)
     #np.save("{}/nat_params.npy".format(Z_EST_FOLDER), nat_params)
     #print("z_est.shape ==", z_est.shape)
-    
-    perf = mcc(s, z_est)    
+
+    perf = mcc(s, z_est)
     print("EVAL PERFORMANCE: {}".format(perf))
     if args.save_results:
         save_results("results.json", args, perf, seed)
     print("DONE.")
-

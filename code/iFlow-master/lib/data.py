@@ -117,13 +117,13 @@ def generate_mixing_matrix(d_sources: int, d_data=None, lin_type='uniform', cond
     return A
 
 
-def generate_nonstationary_sources(n_per_seg: int, 
-                                   n_seg: int, 
-                                   d: int, 
-                                   prior='gauss', 
+def generate_nonstationary_sources(n_per_seg: int,
+                                   n_seg: int,
+                                   d: int,
+                                   prior='gauss',
                                    var_bounds=np.array([0.5, 3]),
-                                   dtype=np.float32, 
-                                   uncentered=False, 
+                                   dtype=np.float32,
+                                   uncentered=False,
                                    centers=None):
     """
     Generate source signal following a TCL distribution. Within each segment, sources are independent.
@@ -144,7 +144,7 @@ def generate_nonstationary_sources(n_per_seg: int,
         L: modulation parameter of each component
     @rtype: (np.ndarray, np.ndarray, np.ndarray, np.ndarray)
     """
-    
+
     var_lb = var_bounds[0]
     var_ub = var_bounds[1]
     n = n_per_seg * n_seg  # 1000*40
@@ -200,7 +200,7 @@ def generate_nonstationary_sources(n_per_seg: int,
                 [-0.0569, -0.0000,  0.4842],
                 [-0.0607,  0.0000,  0.2196]])
         """
-        
+
         sources[segID] *= L[seg]
         sources[segID] += m[seg]
         labels[segID] = seg
@@ -208,22 +208,22 @@ def generate_nonstationary_sources(n_per_seg: int,
     return sources, labels, m, L
 
 
-def generate_data(n_per_seg, 
-                  n_seg, 
-                  d_sources, 
-                  d_data=None, 
-                  n_layers=3, 
-                  prior='lap', 
-                  activation='lrelu', 
+def generate_data(n_per_seg,
+                  n_seg,
+                  d_sources,
+                  d_data=None,
+                  n_layers=3,
+                  prior='lap',
+                  activation='lrelu',
                   batch_size=250,
-                  seed=10, 
-                  slope=.1, 
-                  var_bounds=np.array([0.5, 3]), 
-                  lin_type='uniform', 
+                  seed=10,
+                  slope=.1,
+                  var_bounds=np.array([0.5, 3]),
+                  lin_type='uniform',
                   n_iter_4_cond=1e4,
-                  dtype=np.float32, 
-                  noisy=0, 
-                  uncentered=False, 
+                  dtype=np.float32,
+                  noisy=0,
+                  uncentered=False,
                   centers=None):
     """
     Generate artificial data with arbitrary mixing
@@ -256,14 +256,15 @@ def generate_data(n_per_seg,
         d_data = d_sources
 
     # sources
-    sources, labels, m, L = generate_nonstationary_sources(n_per_seg, 
-                                                           n_seg, 
-                                                           d_sources, 
+    sources, labels, m, L = generate_nonstationary_sources(n_per_seg,
+                                                           n_seg,
+                                                           d_sources,
                                                            prior=prior,
-                                                           var_bounds=var_bounds, 
+                                                           var_bounds=var_bounds,
                                                            dtype=dtype,
-                                                           uncentered=uncentered, 
+                                                           uncentered=uncentered,
                                                            centers=centers)
+
     n = n_per_seg * n_seg
 
     # non linearity
@@ -283,14 +284,14 @@ def generate_data(n_per_seg,
     assert n_layers > 1  # suppose we always have at least 2 layers. The last layer doesn't have a non-linearity
     A = generate_mixing_matrix(d_sources, d_data, lin_type=lin_type, n_iter_4_cond=n_iter_4_cond, dtype=dtype)
     # A is of shape (2, 4)
-    
+
     X = act_f(np.dot(sources, A)) # [40000, 2] * [2, 4] ==> [40000, 4]
     #if d_sources != d_data:
     #    B = generate_mixing_matrix(d_data, lin_type=lin_type, n_iter_4_cond=n_iter_4_cond, dtype=dtype)
     #    # B is of shape (4, 4)
     #else:
     #    B = A
-    
+
     for nl in range(1, n_layers):
         B = generate_mixing_matrix(d_data, lin_type=lin_type, n_iter_4_cond=n_iter_4_cond, dtype=dtype)
         if nl == n_layers - 1:
@@ -304,10 +305,14 @@ def generate_data(n_per_seg,
     if noisy:
         X += noisy * np.random.randn(*X.shape)
 
+    import matplotlib.pyplot as plt
+    plt.plot(X[list(range(0,40000,25)),0])
+    plt.show()
+
     # always return batches (as a list), even if number of batches is one,
     if not batch_size:
         return [sources], [X], to_one_hot([labels], m=n_seg), m, L
-    
+
     else:
         idx = np.random.permutation(n) # permutate from 1 to 40,000
         Xb, Sb, Ub = [], [], []
@@ -316,23 +321,23 @@ def generate_data(n_per_seg,
             Sb += [sources[idx][c * batch_size:(c + 1) * batch_size]]
             Xb += [X[idx][c * batch_size:(c + 1) * batch_size]]
             Ub += [labels[idx][c * batch_size:(c + 1) * batch_size]]
-        
+
         return Sb, Xb, to_one_hot(Ub, m=n_seg), m, L
 
 
 def save_data(path, *args, **kwargs):
     kwargs['batch_size'] = 0  # leave batch creation to torch DataLoader
     """
-    {'n_per_seg': 1000, 
-     'n_seg': 40, 
-     'd_sources': 2, 
-     'd_data': 4, 
-     'n_layers': 3, 
-     'prior': 'gauss', 
-     'activation': 'xtanh', 
-     'seed': 1, 
-     'batch_size': 0, 
-     'uncentered': False, 
+    {'n_per_seg': 1000,
+     'n_seg': 40,
+     'd_sources': 2,
+     'd_data': 4,
+     'n_layers': 3,
+     'prior': 'gauss',
+     'activation': 'xtanh',
+     'seed': 1,
+     'batch_size': 0,
+     'uncentered': False,
      'noisy': False}
     """
     Sb, Xb, Ub, m, L = generate_data(*args, **kwargs)
@@ -349,7 +354,7 @@ def save_data(path, *args, **kwargs):
 
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
-    
+
     np.savez_compressed(path, s=Sb, x=Xb, u=Ub, m=m, L=L)
     print(' ... done')
 
@@ -443,17 +448,17 @@ class DataLoaderGPU:
                 }
 
 
-def create_if_not_exist_dataset(root='data/', 
-                                nps=1000, 
-                                ns=40, 
-                                dl=2, 
-                                dd=4, 
-                                nl=3, 
-                                s=1, 
-                                p='gauss', 
+def create_if_not_exist_dataset(root='data/',
+                                nps=1000,
+                                ns=40,
+                                dl=2,
+                                dd=4,
+                                nl=3,
+                                s=1,
+                                p='gauss',
                                 a='xtanh',
-                                uncentered=False, 
-                                noisy=True, 
+                                uncentered=False,
+                                noisy=True,
                                 arg_str=None):
     """
     Create a dataset if it doesn't exist.
@@ -461,7 +466,7 @@ def create_if_not_exist_dataset(root='data/',
     to create the dataset when non-existent.
     This is called in `cmd_utils.create_dataset_before`
     """
-    
+
     if arg_str is not None:
         # overwrites all other arg values
         # arg_str should be of this form: nps_ns_dl_dd_nl_s_p_a_u_n
@@ -474,12 +479,12 @@ def create_if_not_exist_dataset(root='data/',
             s = None
         else:
             s = int(arg_list[5])
-        
+
         if arg_list[-2] == 'f':
             uncentered = False
         else:
             uncentered = True
-        
+
         if arg_list[-1] == 'f':
             noisy = False
         else:
@@ -493,20 +498,20 @@ def create_if_not_exist_dataset(root='data/',
         path_to_dataset += '_u'
     if noisy:
         path_to_dataset += '_n'
-    
+
     path_to_dataset += '.npz'
 
     if not os.path.exists(path_to_dataset) or s is None:
-        kwargs = {"n_per_seg": nps, 
-                  "n_seg": ns, 
-                  "d_sources": dl, 
-                  "d_data": dd, 
-                  "n_layers": nl, 
+        kwargs = {"n_per_seg": nps,
+                  "n_seg": ns,
+                  "d_sources": dl,
+                  "d_data": dd,
+                  "n_layers": nl,
                   "prior": p,
-                  "activation": a, 
-                  "seed": s, 
-                  "batch_size": 0, 
-                  "uncentered": uncentered, 
+                  "activation": a,
+                  "seed": s,
+                  "batch_size": 0,
+                  "uncentered": uncentered,
                   "noisy": noisy}
         save_data(path_to_dataset, **kwargs)
 
