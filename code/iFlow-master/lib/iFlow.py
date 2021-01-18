@@ -109,6 +109,7 @@ class iFlow(nn.Module):
         assert args['latent_dim'] == args['data_dim']
         self.x_dim = self.z_dim = args['latent_dim']
         self.u_dim = args['aux_dim']
+        self.nat_param_method = args['nat_param_method']
         self.k = 2 # number of orders of sufficient statistics
 
         flow_type = args['flow_type']
@@ -144,7 +145,7 @@ class iFlow(nn.Module):
             assert act_str.startswith("Sigmoidx")
             nat_param_act = nn.Sigmoid()
             self.max_act_val = float(act_str.split("x")[-1])
-        
+        self.nat_param_act = nat_param_act
         if self.u_dim == 40:
             self._lambda = nn.Sequential(
                 nn.Linear(self.u_dim, 30),
@@ -152,7 +153,7 @@ class iFlow(nn.Module):
                 nn.Linear(30, 20),
                 nn.ReLU(inplace=True),
                 nn.Linear(20, 2*self.z_dim),
-                nat_param_act,
+                # nat_param_act,
             ) ## for self.u_dim == 40
         elif self.u_dim == 3:
             self._lambda = nn.Sequential(
@@ -161,7 +162,7 @@ class iFlow(nn.Module):
                 nn.Linear(6, 5),
                 nn.ReLU(inplace=True),
                 nn.Linear(5, 2*self.z_dim),
-                nat_param_act,
+                # nat_param_act,
             ) ## for self.u_dim == 60
         elif self.u_dim == 60:
             self._lambda = nn.Sequential(
@@ -170,7 +171,7 @@ class iFlow(nn.Module):
                 nn.Linear(45, 25),
                 nn.ReLU(inplace=True),
                 nn.Linear(25, 2*self.z_dim),
-                nat_param_act,
+                # nat_param_act,
             ) ## for self.u_dim == 60
 
         #assert self.u_dim == 5
@@ -204,12 +205,19 @@ class iFlow(nn.Module):
 
         # construct \lambda
         # of shape (B, n, k).
-        nat_params = self._lambda(u) 
-        nat_params = nat_params.reshape(B, self.z_dim, 2) #+ 1e-5 # force the natural_params to be strictly > 0.
+        if self.nat_param_method != "removed":
+            nat_params = self._lambda(u)
+            nat_params = nat_params.reshape(B, self.z_dim, 2) #+ 1e-5 # force the natural_params to be strictly > 0.
+            if self.nat_param_method == "orig":
+                nat_params = self.nat_param_act(nat_params)
+            elif self.nat_param_method == "fixed":
+                xi = self.nat_param_act(nat_params[:,:,0].unsqueeze(2))
+                nat_params = torch.cat((xi, nat_params[:,:,1].unsqueeze(2)),2)
+        elif self.nat_param_method == "removed":
+            nat_params = torch.ones((B, self.z_dim, 2)).cuda()
         if self.max_act_val:
             nat_params = nat_params * self.max_act_val #+ 1e-5 #self.mask1
         nat_params = nat_params * self.mask2
-        
         return z, T, nat_params, log_jacobians
 
     def neg_log_likelihood(self, x, u):
