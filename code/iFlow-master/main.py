@@ -66,7 +66,8 @@ if __name__ == '__main__':
     parser.add_argument('-lr_pn', '--lr_patience', type=int, default=10)
     parser.add_argument('-nph', '--nat_param_method', type=str, default='orig',
                         help='Changes the way natural params are created. Can choose from orig, fixed or removed')
-    parser.add_argument('-sr', '--save_results', action='store_true', default=False, help='save results in json')
+    parser.add_argument('-sr', '--save_results', default=None, 
+                    help='define to save the results based on the seed. Can either be data or model, to either use data or model seed for result indexing')
 
     args = parser.parse_args()
     print(args)
@@ -312,6 +313,8 @@ if __name__ == '__main__':
 
     perf = mcc(s, z_est)
     print("EVAL PERFORMANCE: {}".format(perf))
-    if args.save_results:
-        save_results("results.json", args, perf, seed)
+    if args.save_results == 'data':
+        save_results("results_variable_dataseed.json", args, perf, seed)
+    elif args.save_results == 'model':
+        save_results("results_variable_netseed.json", args, perf, args.seed)
     print("DONE.")

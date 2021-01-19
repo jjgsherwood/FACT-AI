@@ -305,10 +305,6 @@ def generate_data(n_per_seg,
     if noisy:
         X += noisy * np.random.randn(*X.shape)
 
-    import matplotlib.pyplot as plt
-    plt.plot(X[list(range(0,40000,25)),0])
-    plt.show()
-
     # always return batches (as a list), even if number of batches is one,
     if not batch_size:
         return [sources], [X], to_one_hot([labels], m=n_seg), m, L
