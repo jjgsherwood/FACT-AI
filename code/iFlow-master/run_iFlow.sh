@@ -21,12 +21,12 @@
 #         -nph orig
 # done
 
-for seed in $(seq 1 5)
+for seed in $(seq 16 20)
 do
     python main.py \
-        -x 1000_40_5_5_3_28_gauss_xtanh_u_f \
+        -x 1000_40_5_5_3_$seed"_"gauss_xtanh_u_f \
         -i iFlow \
-        -ft RQNSF_AG \
+        -ft PlanarFlow \
         -npa Softplus \
         -fl 10 \
         -lr_df 0.25 \
@@ -34,11 +34,11 @@ do
         -b 64 \
         -e 20 \
         -l 1e-3 \
-        -s $seed \
+        -s 1 \
         -u 0 \
         -c \
-        -nph orig \
-        -sr model \
+        -nph removed \
+        -sr data \
         -p 
 done
 

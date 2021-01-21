@@ -20,8 +20,13 @@ def save_results(fname, args, perf, seed):
             results = json.load(f)
     except FileNotFoundError:
         results = {}
-    key = f"{args.i_what}_{args.nat_param_method}" if args.i_what == "iFlow" else f"{args.i_what}"
-    print(key)
+    # key = f"{args.i_what}_{args.nat_param_method}" if args.i_what == "iFlow" else f"{args.i_what}"
+    key = f"{args.i_what}"
+    if args.i_what == "iFlow":
+        key += f"_{args.nat_param_method}_{args.flow_type}"
+    print()
+    dataset_size = args.data_args.split("_")[0]
+    key += f"_{dataset_size}"
     if not key in results.keys():
         results[key] = [None for _ in range(100)]
     results[key][seed - 1] = np.round(perf, 4)

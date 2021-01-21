@@ -115,7 +115,7 @@ class iFlow(nn.Module):
         flow_type = args['flow_type']
 
         if flow_type == "PlanarFlow":
-            self.nf = PlanarFlow(dim=self.x_dim, flow_length=args['flow_length'])
+            self.nf = NormalizingFlow(dim=self.x_dim, flow_length=args['flow_length'])
 
         elif flow_type == "RQNSF_C":
             transform = transforms.CompositeTransform([
