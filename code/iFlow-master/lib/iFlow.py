@@ -5,6 +5,7 @@ import torch
 from torch import distributions as dist
 from torch import nn
 from torch.nn import functional as F
+from torch import distributions
 
 import pdb
 
@@ -12,6 +13,7 @@ import pdb
 
 ################# iFlow ####################
 import lib
+from lib.real_nvp import RealNVP
 from lib.rq_spline_flow import utils as utils_rqsf
 from lib.rq_spline_flow import transforms
 from lib.rq_spline_flow import nn_
@@ -126,6 +128,10 @@ class iFlow(nn.Module):
         elif flow_type == "RQNSF_AG":
             transform = create_transform(self.z_dim, args['flow_length'], args['num_bins'])
             self.nf = SplineFlow(transform)
+
+        elif flow_type == "Real_NVP":
+            prior = distributions.MultivariateNormal
+            self.nf = RealNVP(self.x_dim, 32, args['flow_length'], prior)
 
         else:
             raise ValueError
