@@ -36,9 +36,7 @@ do
         -l 1e-3 \
         -s 1 \
         -u 0 \
-        -c \
-        -nph orig \
-        -p 
+        -nph orig 
 done
 
 #python main.py \
