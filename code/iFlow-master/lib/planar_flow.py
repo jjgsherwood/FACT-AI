@@ -29,7 +29,7 @@ class NormalizingFlow(nn.Module):
 
         zk = z
 
-        return zk, log_jacobians
+        return zk, torch.stack(log_jacobians)
 
 
 class PlanarFlow(nn.Module):
