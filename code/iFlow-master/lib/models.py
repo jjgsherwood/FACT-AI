@@ -228,7 +228,7 @@ class iVAE(nn.Module):
                         slope=slope, 
                         device=device)
         # self.logl maps u to z with n_layers fc layers
-
+        
         # decoder params
         self.f = MLP(latent_dim, 
                      data_dim, 

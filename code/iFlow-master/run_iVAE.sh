@@ -1,50 +1,25 @@
+# Remove -c and -p arguments when training on CPU
 
-# Set -i to iVAE for iVAE and iFlow for iFlow
-
-# for seed in $(seq 1 100)  (use this for all seeds)
-for seed in $(seq 61 80)
+# Testing default iVAE performance with variable dataseed.
+for seed in $(seq 1 20)
 do
     python3 main.py \
         -x 1000_40_5_5_3_$seed'_'gauss_xtanh_u_f \
         -i iVAE \
-        -ft RQNSF_AG \
-        -npa Softplus \
-        -fl 10 \
-        -lr_df 0.25 \
-        -lr_pn 10 \
-        -b 64 \
-        -e 20 \
-        -l 1e-3 \
-        -s 1 \
-        -u 0 \
         -c \
-        -nph fixed
+        -p \
+        -sr data
 done
-    
-#python main.py \
-#    -x 1000_40_5_5_3_1_gauss_xtanh_u_f \
-#    -i iFlow \
-#    -fl 10 \
-#    -lr_df 0.5 \
-#    -lr_pn 10 \
-#    -b 64 \
-#    -e 20 \
-#    -l 1e-3 \
-#    -s 1 \
-#    -u 6 \
-#    -c 
 
-#python main.py \
-#    -x 100000_40_5_5_3_1_gauss_xtanh_u_f \
-#    -i iFlow \
-#    -fl 10 \
-#    -lr_df 0.5 \
-#    -lr_pn 10 \
-#    -b 10000 \
-#    -e 20 \
-#    -l 1e-3 \
-#    -s 1 \
-#    -u 0 \
-#    -c \
-#    -p
-    
+## Testing default iVAE performance with variable net seed.
+
+# for seed in $(seq 1 20)
+# do
+#     python3 main.py \
+#         -x 1000_40_5_5_3_1_gauss_xtanh_u_f \
+#         -i iVAE \
+#         -s $seed \
+#         -c \
+#         -p \
+#         -sr model
+# done

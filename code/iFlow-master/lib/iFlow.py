@@ -147,33 +147,32 @@ class iFlow(nn.Module):
             nat_param_act = nn.Sigmoid()
             self.max_act_val = float(act_str.split("x")[-1])
         self.nat_param_act = nat_param_act
-        if self.u_dim == 40:
-            self._lambda = nn.Sequential(
-                nn.Linear(self.u_dim, 30),
-                nn.ReLU(inplace=True),
-                nn.Linear(30, 20),
-                nn.ReLU(inplace=True),
-                nn.Linear(20, 2*self.z_dim),
-                # nat_param_act,
-            ) ## for self.u_dim == 40
-        elif self.u_dim == 3:
-            self._lambda = nn.Sequential(
-                nn.Linear(self.u_dim, 6),
-                nn.ReLU(inplace=True),
-                nn.Linear(6, 5),
-                nn.ReLU(inplace=True),
-                nn.Linear(5, 2*self.z_dim),
-                # nat_param_act,
-            ) ## for self.u_dim == 60
-        elif self.u_dim == 60:
-            self._lambda = nn.Sequential(
-                nn.Linear(self.u_dim, 45),
-                nn.ReLU(inplace=True),
-                nn.Linear(45, 25),
-                nn.ReLU(inplace=True),
-                nn.Linear(25, 2*self.z_dim),
-                # nat_param_act,
-            ) ## for self.u_dim == 60
+
+        if self.nat_param_method != "removed":
+            if self.u_dim == 40:
+                self._lambda = nn.Sequential(
+                    nn.Linear(self.u_dim, 30),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(30, 20),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(20, 2*self.z_dim),
+                ) ## for self.u_dim == 40
+            elif self.u_dim == 3:
+                self._lambda = nn.Sequential(
+                    nn.Linear(self.u_dim, 6),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(6, 5),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(5, 2*self.z_dim),
+                ) ## for self.u_dim == 60
+            elif self.u_dim == 60:
+                self._lambda = nn.Sequential(
+                    nn.Linear(self.u_dim, 45),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(45, 25),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(25, 2*self.z_dim),
+                ) ## for self.u_dim == 60
 
         #assert self.u_dim == 5
         #self._lambda = nn.Sequential(
@@ -211,14 +210,14 @@ class iFlow(nn.Module):
             nat_params = nat_params.reshape(B, self.z_dim, 2) #+ 1e-5 # force the natural_params to be strictly > 0.
             if self.nat_param_method == "original":
                 nat_params = self.nat_param_act(nat_params)
-            # Only applies softplus over the xis and not etas    
+            # Only applies softplus over the xis and not etas to allow for more flexibility.   
             elif self.nat_param_method == "fixed":
                 xi = self.nat_param_act(nat_params[:,:,0].unsqueeze(2))
                 nat_params = torch.cat((xi, nat_params[:,:,1].unsqueeze(2)),2)
             else:
                 raise ValueError
-        # Effectively disables the contribution and training of the Lambda network to test non-i Flow models.    
-        elif self.nat_param_method == "removed":
+        # Effectively disables the contribution and training of the Lambda network to test non-i Flow models. 
+        else:
             nat_params = torch.ones((B, self.z_dim, 2)).to(self.args['device'])
         if self.max_act_val:
             nat_params = nat_params * self.max_act_val #+ 1e-5 #self.mask1
