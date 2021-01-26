@@ -129,10 +129,6 @@ class iFlow(nn.Module):
             transform = create_transform(self.z_dim, args['flow_length'], args['num_bins'])
             self.nf = SplineFlow(transform)
 
-        elif flow_type == "Real_NVP":
-            prior = distributions.MultivariateNormal
-            self.nf = RealNVP(self.x_dim, 32, args['flow_length'], prior)
-
         else:
             raise ValueError
 

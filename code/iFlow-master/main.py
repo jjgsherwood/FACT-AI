@@ -129,7 +129,7 @@ if __name__ == '__main__':
         metadata.update({"device": device})
         model = iFlow(args=metadata).to(device)
     print(f"\n{args.i_what} model loaded... ")
-    params = sum(p.numel() for p in model.parameters())
+    params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"number of {args.i_what} params: {params}\n")
 
     optimizer = optim.Adam(model.parameters(), lr=args.lr)

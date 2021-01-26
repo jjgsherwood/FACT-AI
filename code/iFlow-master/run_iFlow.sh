@@ -21,12 +21,12 @@
 #         -nph orig
 # done
 
-for seed in $(seq 1 1)
+for seed in $(seq 1 5)
 do
     python main.py \
         -x 1000_40_5_5_3_$seed"_"gauss_xtanh_u_f \
         -i iFlow \
-        -ft Real_NVP \
+        -ft RQNSF_AG \
         -npa Softplus \
         -fl 10 \
         -lr_df 0.25 \
@@ -36,7 +36,9 @@ do
         -l 1e-3 \
         -s 1 \
         -u 0 \
-        -nph orig 
+        -nph orig \
+        -c \
+        -p
 done
 
 #python main.py \
