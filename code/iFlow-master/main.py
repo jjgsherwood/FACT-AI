@@ -57,7 +57,8 @@ if __name__ == '__main__':
     parser.add_argument('-q', '--log-freq', type=int, default=25, help='logging frequency (default 25).')
 
     parser.add_argument('-i', '--i-what', type=str, default="iFlow")
-    parser.add_argument('-ft', '--flow_type', type=str, default="RQSplineFlow")
+    parser.add_argument('-ft', '--flow_type', type=str, default="RQNSF_AG", 
+                        help='choose flow model. Can choose between RQNSF_AG, RQNSF_C and PlanarFlow')
     parser.add_argument('-nb', '--num_bins', type=int, default=8)
     parser.add_argument('-npa', '--nat_param_act', type=str, default="Sigmoid")
     parser.add_argument('-u', '--gpu_id', type=str, default='0')

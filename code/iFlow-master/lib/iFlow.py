@@ -13,7 +13,6 @@ import pdb
 
 ################# iFlow ####################
 import lib
-from lib.real_nvp import RealNVP
 from lib.rq_spline_flow import utils as utils_rqsf
 from lib.rq_spline_flow import transforms
 from lib.rq_spline_flow import nn_
@@ -210,11 +209,15 @@ class iFlow(nn.Module):
         if self.nat_param_method != "removed":
             nat_params = self._lambda(u)
             nat_params = nat_params.reshape(B, self.z_dim, 2) #+ 1e-5 # force the natural_params to be strictly > 0.
-            if self.nat_param_method == "orig":
+            if self.nat_param_method == "original":
                 nat_params = self.nat_param_act(nat_params)
+            # Only applies softplus over the xis and not etas    
             elif self.nat_param_method == "fixed":
                 xi = self.nat_param_act(nat_params[:,:,0].unsqueeze(2))
                 nat_params = torch.cat((xi, nat_params[:,:,1].unsqueeze(2)),2)
+            else:
+                raise ValueError
+        # Effectively disables the contribution and training of the Lambda network to test non-i Flow models.    
         elif self.nat_param_method == "removed":
             nat_params = torch.ones((B, self.z_dim, 2)).to(self.args['device'])
         if self.max_act_val:
