@@ -45,7 +45,6 @@ In our research numerous configurations of the model has been trained. To train 
 In all our experiments -x was set to 1000_40_5_5_3_1_gauss_xtanh_u_f and the arguments -c and -p were set.
 
 To train the iFlow model as intended by the original paper on seed=1 run:
-
 ```train
 python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p
 ```
@@ -53,6 +52,26 @@ python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p
 And for iVAE:
 ```train
 python main.py -i iVAE -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p
+```
+
+To train Flow (so without the natural parameters) run:
+```train
+python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -nph removed
+```
+
+To train iFlow using (the less complex) PlanarFlow run:
+```train
+python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -ft PlanarFlow
+```
+
+To train Flow (so without the natural parameters) using PlanarFlow run:
+```train
+python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -ft PlanarFlow -nph removed
+```
+
+To train iFlow using the more flexible ("fixed") λ(u) implementation run:
+```train
+python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -nph fixed
 ```
 
 To train the models for different seeds, see and run the bash files iFlow.sh and iVAE.sh for different configurations of varying the seed.
