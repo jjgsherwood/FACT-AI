@@ -765,3 +765,224 @@ class iVAEforMNIST(nn.Module):
         mup, logl = self.prior(y)
         z = self.reparameterize(mu, logvar)
         return self.decode(z), mu, logvar, mup, logl
+
+
+def dist(x, y):
+    """
+    Euclidean distance between matrix and vector
+    """
+    return (((x - y)**2).sum(1))**0.5
+
+class RealNVP(nn.Module):
+    """
+    This code is based on the github repository: https://github.com/senya-ashukha/real-nvp-pytorch.
+    
+    A simple implementation for RealNVP.
+    inputs:
+     - nets, a neural netwerk that learns the sacaling for each coupling layer.
+     - nett, a neural netwerk that learns the translating for each coupling layer.
+     - mask, this determines which part of the data undergoes the afine projection and which is used as inputs for nett and nets.
+     - prior, the prior used for the latent space representation.
+    """
+    def __init__(self, nets, nett, masks, prior):
+        super().__init__()
+        
+        self.prior = prior
+        self.mask = nn.Parameter(masks, requires_grad=False)
+        self.t = torch.nn.ModuleList([nett() for _ in range(len(masks))])
+        self.s = torch.nn.ModuleList([nets() for _ in range(len(masks))])
+        
+        # nn.Parameters has to be used to prevent memory leaks.
+        self.prev_data = None
+        self.prev_label = None
+
+    def f(self, x):      
+        """
+        forward function for RealNVP.        
+        """
+        log_det_J = x.new_zeros(x.shape[0])
+        for translate, scale, mask in zip(self.t, self.s, self.mask):
+            x1 = y1 = x * mask
+            x2 = x * (1 - mask)
+            s = scale(x1) * (1 - mask)
+            t = translate(x1) * (1 - mask)
+            y2 = x2 * torch.exp(s) + t
+            x = y1 + y2
+            log_det_J += s.sum(dim=1)
+        y = x
+        return y, log_det_J
+
+    def g(self, y):
+        """
+        Reverse function of the forward.
+        """
+        for translate, scale, mask in zip(reversed(self.t), reversed(self.s), reversed(self.mask)):
+            y1 = x1 = y * mask
+            y2 = y * (1 - mask)
+            s = scale(y1) * (1 - mask)
+            t = translate(y1) * (1 - mask)
+            x2 = (y2 - t) * torch.exp(-s)
+            y = x1 + x2
+        x = y
+        return x
+    
+    def log_prob(self, x):
+        """
+        log probability of the data fitting the prior plus the log jacobian.
+        """
+        y, logp = self.f(x)
+        return self.prior.log_prob(y) + logp, y
+    
+    def train_latent_space(self, z, label):
+        """
+        Previous seen data is used in nearest neighbour to determine which point belongs to which class during sampling.
+        This function saves encoded original (latent space) data including the labels.
+        """
+        with torch.no_grad():
+            try:
+                self.prev_data.copy_(z)
+                self.prev_label.copy_(label)
+            except (AttributeError, RuntimeError):
+                self.prev_data = nn.Parameter(z, requires_grad=False)
+                self.prev_label = nn.Parameter(label, requires_grad=False)
+      
+    def sample(self, batchSize):
+        """
+        Sample from prior using Nearest Neighbor to determine the class using prev data.
+        """
+        y = self.prior.sample((batchSize, 1))
+        x = self.g(y)
+        l = np.array([bool(self.prev_label[np.argmin(dist(self.prev_data,s))].item()) for s in y])
+        return x[l],x[~l],y[l],y[~l]
+
+
+class i_RealNVP(nn.Module):
+    """
+    This code is based on the github reposetory: https://github.com/senya-ashukha/real-nvp-pytorch.
+    
+    A simple implementation for RealNVP.
+    inputs:
+     - nets, a neural netwerk that learns the sacaling for each coupling layer.
+     - nett, a neural netwerk that learns the translating for each coupling layer.
+     - mask, this determines which part of the data undergoes the afine projection and which is used as inputs for nett and nets.
+     - prior, the prior which is used to approximate each label.
+     - lr, learning rate for approximating the prior distribution.
+    """
+    def __init__(self, nets, nett, masks, prior, lr=0.1):
+        super().__init__()
+        
+        self.prior = prior
+        self.mask = nn.Parameter(masks, requires_grad=False)
+        self.t = torch.nn.ModuleList([nett() for _ in range(len(masks))])
+        self.s = torch.nn.ModuleList([nets() for _ in range(len(masks))])
+        self._lambda = nn.Sequential(
+            nn.Linear(2, 8),
+            nn.ReLU(True),
+            nn.Linear(8, 8),
+            nn.ReLU(True),
+            nn.Linear(8, 4),
+            nn.Softplus(),
+        )     
+        
+        # nn.Parameters has to be used to prevent memory leaks.
+        with torch.no_grad():
+            self.lr = lr
+            self.mu0 = nn.Parameter(torch.zeros(2), requires_grad=False) 
+            self.mu1 = nn.Parameter(torch.zeros(2), requires_grad=False)
+            self.s0 = nn.Parameter(torch.eye(2), requires_grad=False)
+            self.s1 = nn.Parameter(torch.eye(2), requires_grad=False)
+    
+    def f(self, x, u):
+        """
+        forward function, which is constructed using the RealNVP implementation and the objective function from iflow,
+        from the paper: Identifying through Flows for Recovering Latent Representations, ICLR2020.
+        github: https://github.com/MathsXDC/iFlow
+        """
+        log_det_J = x.new_zeros(x.shape[0])
+        for translate, scale, mask in zip(self.t, self.s, self.mask):
+            x1 = y1 = x * mask
+            x2 = x * (1 - mask)
+            s = scale(x1) * (1 - mask)
+            t = translate(x1) * (1 - mask)
+            y2 = x2 * torch.exp(s) + t
+            x = y1 + y2
+            log_det_J += s.sum(dim=1)
+        z = x
+        
+        T = torch.cat((z*z, z), axis=1).view(-1, 2, 2)
+
+        nat_params = self._lambda(u) 
+        nat_params = nat_params.reshape(-1, 2, 2)
+        self.mask2 = torch.ones((x.shape[0], 2, 2))
+        self.mask2[:, :, 0] *= -1.0
+        
+        nat_params = nat_params * self.mask2
+        
+        return z, T, nat_params, log_det_J
+    
+    def g(self, y):
+        """
+        Reverse function of the forward.
+        """
+        for translate, scale, mask in zip(reversed(self.t), reversed(self.s), reversed(self.mask)):
+            y1 = x1 = y * mask
+            y2 = y * (1 - mask)
+            s = scale(y1) * (1 - mask)
+            t = translate(y1) * (1 - mask)
+            x2 = (y2 - t) * torch.exp(-s)
+            y = x1 + x2
+        x = y
+        return x
+    
+    def log_prob(self, x, u):
+        """
+        log probability of the objective function used in iflow. 
+        """
+        z, T, nat_params, logp = self.f(x, u)    
+        return self.free_energy_bound(T, nat_params) - logp.mean(), z
+    
+    def free_energy_bound(self, T, nat_params):
+        """
+        This function is copied from the iflow code, which calculates the loss except the log jacobian.
+        """
+        B = T.size(0)
+        
+        sum_traces = 0.0
+        for i in range(B):
+            sum_traces += (torch.trace(nat_params[i].mm(T[i]))) 
+        avg_traces = sum_traces / B
+       
+        log_normalizer = -.5 * torch.sum(torch.log(torch.abs(nat_params[:, :, 0]))) / B
+        nat_params_sqr = torch.pow(nat_params[:, :, 1], 2)
+        log_normalizer -= (torch.sum(nat_params_sqr / (4*nat_params[:, :, 0])) / B)
+
+        return log_normalizer - avg_traces 
+    
+    def train_latent_space(self, z, label):
+        """
+        If the models is used for sampling the latent space must be saved.
+        This is done in this function where for each label a prior distribution is used to approximate the latent space for that label.
+        """
+        with torch.no_grad():
+            label = label.bool()
+            m0 = torch.mean(z[label], 0)
+            m1 = torch.mean(z[~label], 0)
+            self.mu0.copy_((1 - self.lr) * self.mu0 + self.lr * m0)
+            self.mu1.copy_((1 - self.lr) * self.mu1 + self.lr * m1)
+            z0 = z[label] - m0
+            z1 = z[~label] - m1
+            self.s0.copy_((1 - self.lr) * self.s0 + self.lr * (z0.T @ z0 / (z0.shape[0] - 1)))
+            self.s1.copy_((1 - self.lr) * self.s1 + self.lr * (z1.T @ z1 / (z1.shape[0] - 1)))
+    
+    def sample(self, batchSize):
+        """
+        Per label batchsize number of points are generated using the appriximate latent space.
+        Before using sample train_latent_space must be used during training.
+        
+        returns latent and original space for each label.
+        """
+        y0 = self.prior(self.mu0, self.s0).sample((batchSize, 1))
+        x0 = self.g(y0)
+        y1 = self.prior(self.mu1, self.s1).sample((batchSize, 1))
+        x1 = self.g(y1)
+        return x0, x1, y0, y1

@@ -315,7 +315,7 @@ if __name__ == '__main__':
     print("EVAL PERFORMANCE: {}".format(perf))
     # Save results
     if args.save_results == 'data':
-        save_results("results_variable_dataseed.json", args, perf, seed)
+        save_results("results/results_variable_dataseed.json", args, perf, seed)
     elif args.save_results == 'model':
-        save_results("results_variable_netseed.json", args, perf, args.seed)
+        save_results("results/results_variable_netseed.json", args, perf, args.seed)
     print("DONE.")
