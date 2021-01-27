@@ -15,21 +15,41 @@ else:
 
 
 def save_results(fname, args, perf, seed):
+    """
+    Saves the MCC results in a json file indexed on configuration.
+    Input:
+            -fname: string with file name
+            -args: network training args
+            -perf: float performance scores
+            -seed: integer seed used to train model
+    """
+    # Create new dictionary if file does not exist.
     try:
         with open(fname) as f:
             results = json.load(f)
     except FileNotFoundError:
         results = {}
-    # key = f"{args.i_what}_{args.nat_param_method}" if args.i_what == "iFlow" else f"{args.i_what}"
+
+    # Create key    
     key = f"{args.i_what}"
     if args.i_what == "iFlow":
         key += f"_{args.nat_param_method}_{args.flow_type}"
-    print()
     dataset_size = args.data_args.split("_")[0]
     key += f"_{dataset_size}"
+    # Create configuration entry
     if not key in results.keys():
-        results[key] = [None for _ in range(100)]
+        results[key] = []
+    # Change results list to required length.    
+    if len(results[key]) < seed:
+        tmp = np.zeros(seed)
+        tmp[:len(results[key])] = results[key]
+        results[key] = tmp
+    # Add result and dump JSON.    
     results[key][seed - 1] = np.round(perf, 4)
+    try:
+        results[key] = results[key].tolist()
+    except AttributeError:
+        pass
     with open(fname, 'w') as f:
         json.dump(results, f)
 

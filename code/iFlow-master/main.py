@@ -57,15 +57,16 @@ if __name__ == '__main__':
     parser.add_argument('-q', '--log-freq', type=int, default=25, help='logging frequency (default 25).')
 
     parser.add_argument('-i', '--i-what', type=str, default="iFlow")
-    parser.add_argument('-ft', '--flow_type', type=str, default="RQSplineFlow")
+    parser.add_argument('-ft', '--flow_type', type=str, default="RQNSF_AG", 
+                        help='choose flow model. Can choose between RQNSF_AG, RQNSF_C and PlanarFlow')
     parser.add_argument('-nb', '--num_bins', type=int, default=8)
-    parser.add_argument('-npa', '--nat_param_act', type=str, default="Sigmoid")
+    parser.add_argument('-npa', '--nat_param_act', type=str, default="Softplus")
     parser.add_argument('-u', '--gpu_id', type=str, default='0')
     parser.add_argument('-fl', '--flow_length', type=int, default=10)
-    parser.add_argument('-lr_df', '--lr_drop_factor', type=float, default=0.5)
+    parser.add_argument('-lr_df', '--lr_drop_factor', type=float, default=0.25)
     parser.add_argument('-lr_pn', '--lr_patience', type=int, default=10)
-    parser.add_argument('-nph', '--nat_param_method', type=str, default='orig',
-                        help='Changes the way natural params are created. Can choose from orig, fixed or removed')
+    parser.add_argument('-nph', '--nat_param_method', type=str, default='original',
+                        help='Changes the way natural params are created. Can choose from original, fixed or removed')
     parser.add_argument('-sr', '--save_results', default=None, 
                     help='define to save the results based on the seed. Can either be data or model, to either use data or model seed for result indexing')
 
@@ -129,7 +130,7 @@ if __name__ == '__main__':
         metadata.update({"device": device})
         model = iFlow(args=metadata).to(device)
     print(f"\n{args.i_what} model loaded... ")
-    params = sum(p.numel() for p in model.parameters())
+    params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"number of {args.i_what} params: {params}\n")
 
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
@@ -295,7 +296,6 @@ if __name__ == '__main__':
         x_b = torch.from_numpy(x_b).to(device)
         u_b = torch.from_numpy(u_b).to(device)
 
-
         if args.i_what == 'iVAE':
             _, z_est_b = model.elbo(x_b, u_b)
         elif args.i_what == 'iFlow':
@@ -313,6 +313,7 @@ if __name__ == '__main__':
 
     perf = mcc(s, z_est)
     print("EVAL PERFORMANCE: {}".format(perf))
+    # Save results
     if args.save_results == 'data':
         save_results("results_variable_dataseed.json", args, perf, seed)
     elif args.save_results == 'model':
