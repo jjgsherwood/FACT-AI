@@ -6,7 +6,8 @@ __pycache__/
 *$py.class
 
 # Experiments folder
-code/iFlow-master/experiments/
+code/experiments/
+code/data/
 
 # C extensions
 *.so
