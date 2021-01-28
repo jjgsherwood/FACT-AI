@@ -47,7 +47,8 @@ To train the different models on the TCL dataset, code/main.py needs to be execu
 * -s Seed used for training the model (default: 1)
 * -c Trains network on GPU if set
 * -p Preloads data on GPU if set
-* -sr: Saves the mean correlation coefficient (MCC) scores to a JSON file, where each key is a string representing the netwerk configuration and the value is a list with MCC scores with the seed as index. Can be set to 'data' or 'model', depending on which seed is varied. (default: None)
+* -sr Saves the mean correlation coefficient (MCC) scores to a JSON file, where each key is a string representing the netwerk configuration and the value is a list with MCC scores with the seed as index. Can be set to 'data' or 'model', depending on which seed is varied. (default: None)
+* -sm Saves the model in trained_models/ if provided.
 
 In all our experiments -x was set to 1000_40_5_5_3_1_gauss_xtanh_u_f and the arguments -c and -p were set.
 
@@ -81,7 +82,10 @@ To train iFlow using the more flexible ("fixed") λ(u) implementation run:
 python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -nph fixed
 ```
 
-To train the models for different seeds, see and run the bash files iFlow.sh and iVAE.sh for different configurations of varying the seed, aswell as saving the results in a JSON file based on seed index.
+To train the models for different seeds, see and run the bash files `iFlow.sh` and `iVAE.sh` for different configurations of varying the seed, aswell as saving the results in a JSON file based on seed index. 
+For Windows, either run these .sh files in a suitable environment (such as the Git bash terminal), or adapt the `run_windows_iflow.bat` file to your need and execute.
+
+To save the models in `trained_models/`, add the ```-sm``` argument.
 
 
 ### Half-Moon Dataset
@@ -95,7 +99,7 @@ Two pre-trained models for the Half-moon dataset are located in ```trained_model
 
 ## Result evaluation
 
-The Jupyter Notebook file ```visualize_results.ipynb``` contains code to visualize the results from both the TCL dataset aswell as the Half-Moon dataset experiments. This Jupyter Notebook file can simply be executed from top-to-bottom. Note that for the Notebook to work as intended the provided results in ```results/results_variable_dataseed.json```and ```results/results_variable_netseed.json``` and the pre-trained Half-Moon networks should be available or, alternatively, these results and models are re-generated using the Half-Moon dataset training notebooks and/or executing the different configurations in the ```iFlow.sh``` and ```iVAE.sh``` files.
+The Jupyter Notebook file ```visualize_results.ipynb``` contains code to visualize the results from both the TCL dataset aswell as the Half-Moon dataset experiments. This Jupyter Notebook file can simply be executed from top-to-bottom, without needing a GPU. Note that for the Notebook to work as intended the provided results in ```results/results_variable_dataseed.json```and ```results/results_variable_netseed.json``` and the pre-trained Half-Moon networks should be available or, alternatively, these results and models are re-generated using the Half-Moon dataset training notebooks and/or executing the different configurations in the ```iFlow.sh``` and ```iVAE.sh``` files.
 
 
 ## Results

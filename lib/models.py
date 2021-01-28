@@ -767,7 +767,7 @@ class iVAEforMNIST(nn.Module):
         return self.decode(z), mu, logvar, mup, logl
 
 
-def dist(x, y):
+def dist2(x, y):
     """
     Euclidean distance between matrix and vector
     """
@@ -852,7 +852,7 @@ class RealNVP(nn.Module):
         """
         y = self.prior.sample((batchSize, 1))
         x = self.g(y)
-        l = np.array([bool(self.prev_label[np.argmin(dist(self.prev_data,s))].item()) for s in y])
+        l = np.array([bool(self.prev_label[np.argmin(dist2(self.prev_data,s))].item()) for s in y])
         return x[l],x[~l],y[l],y[~l]
 
 

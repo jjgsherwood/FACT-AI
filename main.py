@@ -12,7 +12,7 @@ from lib.metrics import mean_corr_coef as mcc
 from lib.models import iVAE
 from lib.planar_flow import *
 from lib.iFlow import *
-from lib.utils import Logger, checkpoint, save_results
+from lib.utils import Logger, checkpoint, save_results, save_model
 
 
 import os
@@ -69,6 +69,8 @@ if __name__ == '__main__':
                         help='Changes the way natural params are created. Can choose from original, fixed or removed')
     parser.add_argument('-sr', '--save_results', default=None, 
                     help='define to save the results based on the seed. Can either be data or model, to either use data or model seed for result indexing')
+    parser.add_argument('-sm', '--save_model', action="store_true", default=False, 
+                    help='Saves model in trained_models/')
 
     args = parser.parse_args()
     print(args)
@@ -318,4 +320,7 @@ if __name__ == '__main__':
         save_results("results/results_variable_dataseed.json", args, perf, seed)
     elif args.save_results == 'model':
         save_results("results/results_variable_netseed.json", args, perf, args.seed)
+
+    if args.save_model:
+        save_model(model, args, "trained_models/", seed, perf, loss)
     print("DONE.")

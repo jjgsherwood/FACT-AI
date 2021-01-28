@@ -14,12 +14,49 @@ else:
     fcntl = None
 
 
+def create_model_name(args):
+    """
+    Creates name of a model based on the training arguments in the format:
+    for iFlow:
+    <network>_<lambda_implementation>_<flow_network>_<dataset_size>
+    for iVAE:
+        <network>_<dataset_size>
+    """
+    mname = f"{args.i_what}"
+    if args.i_what == "iFlow":
+        mname += f"_{args.nat_param_method}_{args.flow_type}"
+    dataset_size = args.data_args.split("_")[0]
+    mname += f"_{dataset_size}"
+    return mname
+
+def save_model(model, args, save_dir, seed, perf, loss):
+    """
+    Saves the model in the format: 
+    for iFlow:
+    <network>_<lambda_implementation>_<flow_network>_<dataset_size>_<network_seed>_<data_seed>.pt
+    for iVAE:
+        <network>_<dataset_size>_<network_seed>_<data_seed>.pt
+    
+    Input: 
+        -model: trained model.
+        -args: network training arguments
+        -save_dir: location to save network
+    """
+    # Creating model save name
+    f_name = create_model_name(args)
+    f_name += f"_{args.seed}_{seed}.pt"
+    torch.save({'model_state_dict': model.state_dict(),
+            'args': args,
+            'loss': loss,
+            'perf': perf},
+            save_dir + f_name)
+
 def save_results(fname, args, perf, seed):
     """
     Saves the MCC results in a json file indexed on configuration.
     Input:
             -fname: string with file name
-            -args: network training args
+            -args: network training arguments
             -perf: float performance scores
             -seed: integer seed used to train model
     """
@@ -31,11 +68,7 @@ def save_results(fname, args, perf, seed):
         results = {}
 
     # Create key    
-    key = f"{args.i_what}"
-    if args.i_what == "iFlow":
-        key += f"_{args.nat_param_method}_{args.flow_type}"
-    dataset_size = args.data_args.split("_")[0]
-    key += f"_{dataset_size}"
+    key = create_model_name(args)
     # Create configuration entry
     if not key in results.keys():
         results[key] = []
