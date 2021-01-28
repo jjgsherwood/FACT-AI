@@ -7,6 +7,8 @@ This Github repository is part of our submission to the 2021 MLRC Reproducibilit
 
 ## Requirements
 
+Python>=3.6.8.
+
 To install requirements for training on the GPU:
 
 ```setup
@@ -19,9 +21,15 @@ And for training on the CPU:
 pip install -r requirements_CPU.txt
 ```
 
+Note here that Python 3.9 users should add ```-c=conda-forge``` to the installation of Pytorch.
+
 ## Training
 
-In our research numerous configurations of the model has been trained. To train the different models, there are several important parameters:
+In our research numerous configurations of the model has been trained and evaluated. These models were trained across two different datasets: the original TLC dataset and the half-moon dataset.
+
+### TCL Dataset
+
+To train the different models on the TCL dataset, code/main.py needs to be executed. In this file there are several important parameters:
 
 * -i Determines the network to use. Can either be iFlow (default) or iVAE
 * -x Contains the arguments for data generation in the format: nps_ns_dl_dd_nl_s_p_a_u_n, where:
@@ -51,62 +59,57 @@ python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p
 
 And for iVAE:
 ```train
-python main.py -i iVAE -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p
+python code/main.py -i iVAE -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p
 ```
 
-To train Flow (so without the natural parameters) run:
+To train regular Normalized Flow (so without the natural parameters) run:
 ```train
-python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -nph removed
+python code/main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -nph removed
 ```
 
 To train iFlow using (the less complex) PlanarFlow run:
 ```train
-python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -ft PlanarFlow
+python code/main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -ft PlanarFlow
 ```
 
-To train Flow (so without the natural parameters) using PlanarFlow run:
+To train regular Normalized Flow (so without the natural parameters) using PlanarFlow run:
 ```train
-python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -ft PlanarFlow -nph removed
+python code/main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -ft PlanarFlow -nph removed
 ```
 
 To train iFlow using the more flexible ("fixed") λ(u) implementation run:
 ```train
-python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -nph fixed
+python code/main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -nph fixed
 ```
 
-To train the models for different seeds, see and run the bash files iFlow.sh and iVAE.sh for different configurations of varying the seed.
+To train the models for different seeds, see and run the bash files code/iFlow.sh and code/iVAE.sh for different configurations of varying the seed, aswell as saving the results in a JSON file based on seed index.
 
-## Result evaluation
 
-To evaluate my model on ImageNet, run:
+### Half-Moon Dataset
 
-```eval
-python eval.py --model-file mymodel.pth --benchmark imagenet
-```
-
->📋  Describe how to evaluate the trained models on benchmarks reported in the paper, give commands that produce the results (section below).
+To get more insight into how the iFlow model differs from the standard Flow model the files ```code/real-nvp-pytorch-iflow.ipynb``` and ```code/real-nvp-pytorch-flow.ipynb``` contain code to train an iFlow or regular Flow model using the RealNVP normalized flow network on the half-moon dataset. Run these Jupyter Notebook files to train and save the models.
 
 ## Pre-trained Models
 
-You can download pretrained models here:
+Two pre-trained models for the Half-moon dataset are located in ```code/trained_models``` 
 
-- [My awesome model](https://drive.google.com/mymodel.pth) trained on ImageNet using parameters x,y,z. 
 
->📋  Give a link to where/how the pretrained models can be downloaded and how they were trained (if applicable).  Alternatively you can have an additional column in your results table with a link to the models.
+## Result evaluation
+
+The Jupyter Notebook file ```code/visualize_results.ipynb``` contains code to visualize the results from both the TCL dataset aswell as the Half-Moon dataset experiments. This Jupyter Notebook file can simply be executed from top-to-bottom. Note that for the Notebook to work as intended the provided results in ```results/results_variable_dataseed.json```and ```results/results_variable_netseed.json``` and the pre-trained Half-Moon networks should be available or, alternatively, these results and models are re-generated using the Half-Moon dataset training notebooks and/or executing the different configurations in the ```code/iFlow.sh``` and ```code/iVAE.sh``` files.
+
 
 ## Results
 
-Our model achieves the following performance on :
+The following results were obtained by running the visualization notebook for the TCL dataset using the provided results, which in turn were generated using the .sh scripts.
 
-### [Image Classification on ImageNet](https://paperswithcode.com/sota/image-classification-on-imagenet)
 
-| Model name         | Top 1 Accuracy  | Top 5 Accuracy |
+| Model name         | Average MCC  | Standard deviation |
 | ------------------ |---------------- | -------------- |
-| My awesome model   |     85%         |      95%       |
+| iFlow   |     0.7131         |      0.0585       |
+| iVAE (SplineFlow)   |     0.4701         |      0.0726       |
+| Flow (SplineFlow)  |     0.6446         |      0.0638      |
+| iFlow (PlanarFlow)  |     0.619        |      0.0421       |
+| Flow (PlanarFlow)  |     0.5786      |      0.0522       |
+| "improved" iFlow (SplineFlow)  |     0.7499        |      0.0804       |
 
->📋  Include a table of results from your paper, and link back to the leaderboard for clarity and context. If your main result is a figure, include that figure and link to the command or notebook to reproduce it. 
-
-
-## Contributing
-
->📋  Pick a licence and describe how to contribute to your code repository.
