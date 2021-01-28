@@ -6,8 +6,7 @@ __pycache__/
 *$py.class
 
 # Experiments folder
-code/experiments/
-code/data/
+experiments/
 
 # C extensions
 *.so
