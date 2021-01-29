@@ -1,9 +1,8 @@
 <!-- >📋  A template README.md for code accompanying a Machine Learning paper -->
 # My Paper Title
 
-This Github repository is part of our submission to the 2021 MLRC Reproducibility Challenge, where we attempt to reproduce the results and verify the claims of [Identifying through Flows for Recovering Latent Representations](https://arxiv.org/abs/1909.12555). This repository is a modified version of the official [GitHub implementation](https://github.com/MathsXDC/iFlow).
+This Github repository is part of our submission to the 2021 MLRC Reproducibility Challenge, where we attempt to reproduce the results and verify the claims of [Identifying through Flows for Recovering Latent Representations](https://arxiv.org/abs/1909.12555). This repository is a modified version of the official [GitHub implementation](https://github.com/MathsXDC/iFlow). Futhermore, the added RealNVP implementation for visualizing the difference between iFlow and Flow is adapted from this [GitHub RealNVP implementation](https://github.com/senya-ashukha/real-nvp-pytorch.)
 
-<!-- >📋  Optional: include a graphic explaining your approach/main result, bibtex entry, link to demos, blog posts and tutorials -->
 
 ## Requirements
 
@@ -25,7 +24,7 @@ Note here that Python 3.9 users should add ```-c=conda-forge``` to the installat
 
 ## Training
 
-In our research numerous configurations of the model has been trained and evaluated. These models were trained across two different datasets: the original TLC dataset and the half-moon dataset.
+In our research numerous configurations of the model has been trained and evaluated. These models were trained across two different datasets: the original TLC dataset and the Half-Moon dataset, as provided by Sklearn.
 
 ### TCL Dataset
 
@@ -48,7 +47,8 @@ To train the different models on the TCL dataset, code/main.py needs to be execu
 * -s Seed used for training the model (default: 1)
 * -c Trains network on GPU if set
 * -p Preloads data on GPU if set
-* -sr: Saves the mean correlation coefficient (MCC) scores to a JSON file, where each key is a string representing the netwerk configuration and the value is a list with MCC scores with the seed as index. Can be set to 'data' or 'model', depending on which seed is varied. (default: None)
+* -sr Saves the mean correlation coefficient (MCC) scores to a JSON file, where each key is a string representing the netwerk configuration and the value is a list with MCC scores with the seed as index. Can be set to 'data' or 'model', depending on which seed is varied. (default: None)
+* -sm Saves the model in trained_models/ if provided.
 
 In all our experiments -x was set to 1000_40_5_5_3_1_gauss_xtanh_u_f and the arguments -c and -p were set.
 
@@ -59,50 +59,53 @@ python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p
 
 And for iVAE:
 ```train
-python code/main.py -i iVAE -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p
+python main.py -i iVAE -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p
 ```
 
 To train regular Normalized Flow (so without the natural parameters) run:
 ```train
-python code/main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -nph removed
+python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -nph removed
 ```
 
 To train iFlow using (the less complex) PlanarFlow run:
 ```train
-python code/main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -ft PlanarFlow
+python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -ft PlanarFlow
 ```
 
 To train regular Normalized Flow (so without the natural parameters) using PlanarFlow run:
 ```train
-python code/main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -ft PlanarFlow -nph removed
+python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -ft PlanarFlow -nph removed
 ```
 
 To train iFlow using the more flexible ("fixed") λ(u) implementation run:
 ```train
-python code/main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -nph fixed
+python main.py -x 1000_40_5_5_3_1_gauss_xtanh_u_f -c -p -nph fixed
 ```
 
-To train the models for different seeds, see and run the bash files code/iFlow.sh and code/iVAE.sh for different configurations of varying the seed, aswell as saving the results in a JSON file based on seed index.
+To train the models for different seeds, see and run the bash files `iFlow.sh` and `iVAE.sh` for different configurations of varying the seed, aswell as saving the results in a JSON file based on seed index. 
+For Windows, either run these .sh files in a suitable environment (such as the Git bash terminal), or adapt the `run_windows_iflow.bat` file to your need and execute.
+
+To save the models in `trained_models/`, add the ```-sm``` argument.
 
 
 ### Half-Moon Dataset
 
-To get more insight into how the iFlow model differs from the standard Flow model the files ```code/real-nvp-pytorch-iflow.ipynb``` and ```code/real-nvp-pytorch-flow.ipynb``` contain code to train an iFlow or regular Flow model using the RealNVP normalized flow network on the half-moon dataset. Run these Jupyter Notebook files to train and save the models.
+To get more insight into how the iFlow model differs from the standard Flow model the files ```real-nvp-pytorch-iflow.ipynb``` and ```real-nvp-pytorch-flow.ipynb``` contain code to train an iFlow or regular Flow model using the RealNVP normalized flow network on the half-moon dataset. Run these Jupyter Notebook files to train and save the models.
 
 ## Pre-trained Models
 
-Two pre-trained models for the Half-moon dataset are located in ```code/trained_models``` 
+Two pre-trained models for the Half-moon dataset are located in ```trained_models/``` 
 
 
 ## Result evaluation
 
-The Jupyter Notebook file ```code/visualize_results.ipynb``` contains code to visualize the results from both the TCL dataset aswell as the Half-Moon dataset experiments. This Jupyter Notebook file can simply be executed from top-to-bottom. Note that for the Notebook to work as intended the provided results in ```results/results_variable_dataseed.json```and ```results/results_variable_netseed.json``` and the pre-trained Half-Moon networks should be available or, alternatively, these results and models are re-generated using the Half-Moon dataset training notebooks and/or executing the different configurations in the ```code/iFlow.sh``` and ```code/iVAE.sh``` files.
+The Jupyter Notebook file ```visualize_results.ipynb``` contains code to visualize the results from both the TCL dataset aswell as the Half-Moon dataset experiments. This Jupyter Notebook file can simply be executed from top-to-bottom, without needing a GPU. Note that for the Notebook to work as intended the provided results in ```results/results_variable_dataseed.json```and ```results/results_variable_netseed.json``` and the pre-trained Half-Moon networks should be available or, alternatively, these results and models are re-generated using the Half-Moon dataset training notebooks and/or executing the different configurations in the ```iFlow.sh``` and ```iVAE.sh``` files.
 
 
 ## Results
 
+### TCL Dataset
 The following results were obtained by running the visualization notebook for the TCL dataset using the provided results, which in turn were generated using the .sh scripts.
-
 
 | Model name         | Average MCC  | Standard deviation |
 | ------------------ |---------------- | -------------- |
@@ -112,4 +115,17 @@ The following results were obtained by running the visualization notebook for th
 | iFlow (PlanarFlow)  |     0.619        |      0.0421       |
 | Flow (PlanarFlow)  |     0.5786      |      0.0522       |
 | "improved" iFlow (SplineFlow)  |     0.7499        |      0.0804       |
+
+
+### Half-Moon Dataset
+The following results were achieved with our iFlow vs Flow visualization experiments.
+
+
+![Model spaces](https://github.com/jjgsherwood/FACT-AI/blob/main/results/flow_en_de_report.png)
+
+This image shows the original data space X, the latent space generated by encoding the data using the model, the generated latent space according to approximate priors and the decoded generated latent space in the original data space for both iFlow and Flow.
+
+![Model spaces](https://github.com/jjgsherwood/FACT-AI/blob/main/results/flow_latent_report_mini.png)
+
+And this image shows latent space exploration by decoding the entire latent space into data space for both iFlow and Flow.
 
