@@ -1,5 +1,5 @@
 <!-- >📋  A template README.md for code accompanying a Machine Learning paper -->
-# My Paper Title
+# [Re] Identifying Through Flows for RecoveringLatent Representations
 
 This Github repository is part of our submission to the 2021 MLRC Reproducibility Challenge, where we attempt to reproduce the results and verify the claims of [Identifying through Flows for Recovering Latent Representations](https://arxiv.org/abs/1909.12555). This repository is a modified version of the official [GitHub implementation](https://github.com/MathsXDC/iFlow). Futhermore, the added RealNVP implementation for visualizing the difference between iFlow and Flow is adapted from this [GitHub RealNVP implementation](https://github.com/senya-ashukha/real-nvp-pytorch.)
 
