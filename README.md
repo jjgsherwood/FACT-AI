@@ -87,10 +87,24 @@ For Windows, either run these .sh files in a suitable environment (such as the G
 
 To save the models in `trained_models/`, add the ```-sm``` argument.
 
+All these model configurations were trained using on an Nvidia RTX 2080Ti with 11GB of VRAM (4GB should be plenty). The table below shows the different run-times for each configuration.
+
+| Model name         | Totall training time (20 epochs) |
+| ------------------ |---------------- |
+| iFlow (SplineFlow)  |     20 minutes        |
+| iVAE    |     75 seconds         |
+| Flow (SplineFlow)  |     19 minutes         |
+| iFlow (PlanarFlow)  |     7 minutes        |
+| Flow (PlanarFlow)  |     5 minutes      |
+| "improved" iFlow (SplineFlow)  |     20 minutes        |
+
+
 
 ### Half-Moon Dataset
 
 To get more insight into how the iFlow model differs from the standard Flow model the files ```real-nvp-pytorch-iflow.ipynb``` and ```real-nvp-pytorch-flow.ipynb``` contain code to train an iFlow or regular Flow model using the RealNVP normalized flow network on the half-moon dataset. Run these Jupyter Notebook files to train and save the models.
+
+In our research, these models were trained on an AMD Ryzen 9 3900X 12 core/24 thread CPU with 32GB DDR4 3200MHz RAM. Each model took around 3 minutes to train.
 
 ## Pre-trained Models
 
@@ -112,8 +126,8 @@ The following results were obtained by running the visualization notebook for th
 
 | Model name         | Average MCC  | Standard deviation |
 | ------------------ |---------------- | -------------- |
-| iFlow   |     0.7131         |      0.0585       |
-| iVAE (SplineFlow)   |     0.4701         |      0.0726       |
+| iFlow (SplineFlow)   |     0.7131         |      0.0585       |
+| iVAE  |     0.4701         |      0.0726       |
 | Flow (SplineFlow)  |     0.6446         |      0.0638      |
 | iFlow (PlanarFlow)  |     0.619        |      0.0421       |
 | Flow (PlanarFlow)  |     0.5786      |      0.0522       |
