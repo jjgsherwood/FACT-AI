@@ -96,6 +96,9 @@ To get more insight into how the iFlow model differs from the standard Flow mode
 
 Two pre-trained models for the Half-moon dataset are located in ```trained_models/``` 
 
+## Gaussian Blob dataset
+In addition to our research we also include our own created Gaussian Blob dataset in `blob/Gaussian_blob.ipynb`. We have not performed any tests regarding the networks on this dataset, but the dataset is provided for possible use.
+
 
 ## Result evaluation
 
