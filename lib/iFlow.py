@@ -203,7 +203,7 @@ class iFlow(nn.Module):
         # of shape (B, k, n), where n is latent dim and k is parameter of exponential family.
         T = torch.cat((z*z, z), axis=1).view(B, self.k, -1)
 
-        # construct \lambda
+        # construct \lambda based on implementation method.
         # of shape (B, n, k).
         if self.nat_param_method != "removed":
             nat_params = self._lambda(u)
@@ -213,7 +213,7 @@ class iFlow(nn.Module):
             # Only applies softplus over the xis and not etas to allow for more flexibility.   
             elif self.nat_param_method == "fixed":
                 xi = self.nat_param_act(nat_params[:,:,0].unsqueeze(2))
-                nat_params = torch.cat((xi, nat_params[:,:,1].unsqueeze(2)),2)
+                nat_params = torch.cat((xi, nat_params[:,:,1].unsqueeze(2)), 2)
             else:
                 raise ValueError
         # Effectively disables the contribution and training of the Lambda network to test non-i Flow models. 
